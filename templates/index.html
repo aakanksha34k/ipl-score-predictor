@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL Score Predictor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-slate-50 text-gray-800 font-sans antialiased">
+    <div class="container mx-auto p-8 max-w-5xl">
+
+        <div class="text-center mb-10">
+            <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-4">
+                IPL First Innings Predictor
+            </h1>
+            <p class="text-gray-500 text-lg">Machine Learning Driven Match Projections · IPL 2025 Rules</p>
+        </div>
+
+        <!-- Server-side error banner -->
+        {% if error %}
+        <div class="mb-6 bg-red-50 border border-red-300 text-red-700 px-5 py-4 rounded-xl flex items-start gap-3">
+            <svg class="w-5 h-5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            <span class="font-medium">{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Client-side validation error banner (hidden by default) -->
+        <div id="clientError"
+            class="hidden mb-6 bg-red-50 border border-red-300 text-red-700 px-5 py-4 rounded-xl flex items-start gap-3">
+            <svg class="w-5 h-5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            <span id="clientErrorMsg" class="font-medium"></span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- ── FORM PANEL ──────────────────────────────────────────────── -->
+            <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+                <form id="predictForm" action="/predict" method="POST" class="space-y-6" novalidate>
+
+                    <!-- Teams -->
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Batting Team</label>
+                            <select id="batting_team" name="batting_team"
+                                class="w-full bg-slate-50 border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                required>
+                                <option value="Chennai Super Kings">Chennai Super Kings</option>
+                                <option value="Delhi Capitals">Delhi Capitals</option>
+                                <option value="Gujarat Titans">Gujarat Titans</option>
+                                <option value="Kolkata Knight Riders">Kolkata Knight Riders</option>
+                                <option value="Lucknow Super Giants">Lucknow Super Giants</option>
+                                <option value="Mumbai Indians">Mumbai Indians</option>
+                                <option value="Punjab Kings">Punjab Kings</option>
+                                <option value="Rajasthan Royals">Rajasthan Royals</option>
+                                <option value="Royal Challengers Bengaluru">Royal Challengers Bengaluru</option>
+                                <option value="Sunrisers Hyderabad">Sunrisers Hyderabad</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Bowling Team</label>
+                            <select id="bowling_team" name="bowling_team"
+                                class="w-full bg-slate-50 border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                required>
+                                <option value="Mumbai Indians">Mumbai Indians</option>
+                                <option value="Chennai Super Kings">Chennai Super Kings</option>
+                                <option value="Delhi Capitals">Delhi Capitals</option>
+                                <option value="Gujarat Titans">Gujarat Titans</option>
+                                <option value="Kolkata Knight Riders">Kolkata Knight Riders</option>
+                                <option value="Lucknow Super Giants">Lucknow Super Giants</option>
+                                <option value="Punjab Kings">Punjab Kings</option>
+                                <option value="Rajasthan Royals">Rajasthan Royals</option>
+                                <option value="Royal Challengers Bengaluru">Royal Challengers Bengaluru</option>
+                                <option value="Sunrisers Hyderabad">Sunrisers Hyderabad</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Venue -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Venue</label>
+                        <select name="city"
+                            class="w-full bg-slate-50 border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            required>
+                            <option value="Narendra Modi Stadium, Ahmedabad">Narendra Modi Stadium, Ahmedabad</option>
+                            <option value="MA Chidambaram Stadium, Chepauk, Chennai">MA Chidambaram Stadium, Chennai</option>
+                            <option value="Wankhede Stadium, Mumbai">Wankhede Stadium, Mumbai</option>
+                            <option value="M Chinnaswamy Stadium">M. Chinnaswamy Stadium, Bengaluru</option>
+                            <option value="Eden Gardens, Kolkata">Eden Gardens, Kolkata</option>
+                            <option value="Arun Jaitley Stadium">Arun Jaitley Stadium, Delhi</option>
+                            <option value="Rajiv Gandhi International Stadium, Uppal">Rajiv Gandhi Intl. Stadium, Hyderabad</option>
+                            <option value="Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium">Ekana Cricket Stadium, Lucknow</option>
+                            <option value="Sawai Mansingh Stadium">Sawai Mansingh Stadium, Jaipur</option>
+                            <option value="Punjab Cricket Association IS Bindra Stadium, Mohali">PCA Stadium, Mohali</option>
+                        </select>
+                    </div>
+
+                    <!-- Match Situation -->
+                    <div class="grid grid-cols-2 gap-6">
+
+                        <!-- Current Score -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Current Score</label>
+                            <input type="number" id="current_score" name="current_score"
+                                min="0" max="400" step="1"
+                                class="w-full bg-slate-50 border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                placeholder="e.g. 85" required>
+                        </div>
+
+                        <!-- Wickets Fallen -->
+                        <!-- IPL RULE: max 10 wickets in an innings; 10 wickets = innings over -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Wickets Fallen
+                                <span class="text-xs text-gray-400 font-normal">(0–9)</span>
+                            </label>
+                            <input type="number" id="wickets" name="wickets"
+                                min="0" max="9" step="1"
+                                class="w-full bg-slate-50 border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                placeholder="e.g. 3" required>
+                            <p class="text-xs text-gray-400 mt-1">10 wickets ends the innings</p>
+                        </div>
+
+                        <!-- Overs Completed -->
+                        <!-- IPL RULE: T20 = 20 overs; decimal is balls in current over (0–5 only) -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Overs Completed
+                                <span class="text-xs text-gray-400 font-normal">(e.g. 12.4)</span>
+                            </label>
+                            <input type="number" id="overs" name="overs"
+                                min="0.1" max="19.5" step="0.1"
+                                class="w-full bg-slate-50 border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                placeholder="e.g. 12.4" required>
+                            <p class="text-xs text-gray-400 mt-1">Decimal = balls bowled (max .5)</p>
+                        </div>
+
+                        <!-- Runs in Last 5 Overs -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Runs in Last 5 Overs</label>
+                            <input type="number" id="runs_in_prev_5" name="runs_in_prev_5"
+                                min="0" max="150" step="1"
+                                class="w-full bg-slate-50 border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                placeholder="e.g. 45" required>
+                        </div>
+                    </div>
+
+                    <!-- IPL Powerplay hint (live, shown by JS) -->
+                    <div id="powerplayBadge" class="hidden bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2">
+                        ⚡ Powerplay active (overs 1–6) — only 2 fielders outside the 30-yard circle
+                    </div>
+
+                    <button type="submit"
+                        class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-lg transition duration-300 transform hover:scale-105 shadow-md">
+                        Predict Final Score
+                    </button>
+                </form>
+            </div>
+
+            <!-- ── RESULT PANEL ────────────────────────────────────────────── -->
+            <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 flex flex-col justify-center items-center min-h-[400px]">
+
+                {% if result %}
+
+                <!-- Predicted Score -->
+                <div class="w-full text-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-500 uppercase tracking-wide">Projected Target</h2>
+                    <p class="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-600 mt-2">
+                        {{ result }}
+                    </p>
+                    <p class="text-sm text-gray-400 mt-1">Expected range: {{ result - 5 }} – {{ result + 10 }}</p>
+                </div>
+
+                <!-- Live Match Stats strip -->
+                <div class="w-full grid grid-cols-3 gap-3 mb-5 text-center">
+                    <div class="bg-slate-50 rounded-xl py-3">
+                        <p class="text-xs text-gray-400 uppercase font-semibold">CRR</p>
+                        <p class="text-lg font-bold text-gray-700">{{ crr }}</p>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl py-3">
+                        <p class="text-xs text-gray-400 uppercase font-semibold">Balls Left</p>
+                        <p class="text-lg font-bold text-gray-700">{{ balls_left }}</p>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl py-3">
+                        <p class="text-xs text-gray-400 uppercase font-semibold">Wkts Left</p>
+                        <p class="text-lg font-bold text-gray-700">{{ wickets_left }}</p>
+                    </div>
+                </div>
+
+                <!-- Powerplay indicator (IPL rule: overs 1–6) -->
+                {% if in_powerplay %}
+                <div class="w-full mb-4 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm font-semibold px-4 py-2 rounded-lg text-center">
+                    ⚡ Powerplay phase — fielding restrictions apply (overs 1–6)
+                </div>
+                {% endif %}
+
+                <!-- Score Trajectory Chart -->
+                <div class="w-full">
+                    <canvas id="predictionChart"></canvas>
+                </div>
+
+                <script>
+                    const ctx = document.getElementById('predictionChart').getContext('2d');
+
+                    const currentOvers    = Number('{{ overs }}');
+                    const currentScore    = Number('{{ current_score }}');
+                    const predictedScore  = Number('{{ result }}');
+
+                    // Powerplay boundary line annotation data
+                    const powerplayOver = 6;
+
+                    const chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            datasets: [
+                                {
+                                    label: 'Score Trajectory',
+                                    data: [
+                                        { x: 0, y: 0 },
+                                        { x: currentOvers, y: currentScore },
+                                        { x: 20, y: predictedScore }
+                                    ],
+                                    borderColor: '#4F46E5',
+                                    backgroundColor: 'rgba(79, 70, 229, 0.08)',
+                                    borderWidth: 3,
+                                    pointBackgroundColor: ['#fff', '#4F46E5', '#10B981'],
+                                    pointBorderColor: ['#ccc', '#4F46E5', '#10B981'],
+                                    pointRadius: [0, 7, 9],
+                                    fill: true,
+                                    tension: 0.3
+                                },
+                                // Powerplay boundary (dashed vertical hint)
+                                {
+                                    label: 'End of Powerplay',
+                                    data: [
+                                        { x: powerplayOver, y: 0 },
+                                        { x: powerplayOver, y: predictedScore + 20 }
+                                    ],
+                                    borderColor: 'rgba(234,179,8,0.6)',
+                                    borderWidth: 2,
+                                    borderDash: [6, 4],
+                                    pointRadius: 0,
+                                    fill: false,
+                                    tension: 0
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: true, position: 'bottom' },
+                                tooltip: {
+                                    callbacks: {
+                                        label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y} runs`
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    type: 'linear',
+                                    title: { display: true, text: 'Overs' },
+                                    min: 0,
+                                    max: 20,
+                                    ticks: { stepSize: 5 }
+                                },
+                                y: {
+                                    title: { display: true, text: 'Runs' },
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                </script>
+
+                {% else %}
+
+                <div class="text-center text-gray-400">
+                    <svg class="w-24 h-24 mx-auto text-gray-200 mb-4" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    <p class="text-lg">Fill out the match situation and click Predict to see the trajectory.</p>
+                    <p class="text-sm mt-2 text-gray-300">Powerplay ends at over 6 · Max 10 wickets · 20 overs</p>
+                </div>
+
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- IPL Rules reference footer -->
+        <div class="mt-8 bg-white border border-gray-100 rounded-2xl shadow-sm px-8 py-5 text-sm text-gray-500">
+            <p class="font-semibold text-gray-600 mb-2">IPL 2025 Rules applied in this predictor</p>
+            <ul class="list-disc list-inside space-y-1">
+                <li>T20 format: 20 overs (120 balls) per innings</li>
+                <li><strong>Powerplay (overs 1–6):</strong> max 2 fielders outside the 30-yard circle</li>
+                <li>Innings ends at 10 wickets or 20 overs, whichever comes first</li>
+                <li>Each bowler may bowl a maximum of 4 overs</li>
+                <li>Over notation: decimal represents balls bowled (1–5 only, e.g. 12.4 = 12 overs &amp; 4 balls)</li>
+                <li>Impact Player rule active (IPL 2023+): each team may substitute one player during the match</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ── Client-side IPL rule validation ────────────────────────────────── -->
+    <script>
+        const form        = document.getElementById('predictForm');
+        const errBanner   = document.getElementById('clientError');
+        const errMsg      = document.getElementById('clientErrorMsg');
+        const ppBadge     = document.getElementById('powerplayBadge');
+        const oversInput  = document.getElementById('overs');
+
+        function showError(msg) {
+            errMsg.textContent = msg;
+            errBanner.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return false;
+        }
+
+        function hideError() {
+            errBanner.classList.add('hidden');
+        }
+
+        // Live powerplay indicator
+        oversInput.addEventListener('input', () => {
+            const val            = parseFloat(oversInput.value) || 0;
+            const completedOvers = Math.floor(val);
+            ppBadge.classList.toggle('hidden', completedOvers >= 6);
+        });
+
+        form.addEventListener('submit', function (e) {
+            hideError();
+
+            const batting  = document.getElementById('batting_team').value;
+            const bowling  = document.getElementById('bowling_team').value;
+            const overs    = parseFloat(document.getElementById('overs').value);
+            const wickets  = parseInt(document.getElementById('wickets').value, 10);
+            const score    = parseInt(document.getElementById('current_score').value, 10);
+            const lastFive = parseInt(document.getElementById('runs_in_prev_5').value, 10);
+
+            // IPL RULE: teams must differ
+            if (batting === bowling) {
+                e.preventDefault();
+                return showError('Batting team and bowling team cannot be the same.');
+            }
+
+            // IPL RULE: overs decimal must be 0–5 (cricket notation)
+            const ballsInOver = Math.round((overs % 1) * 10);
+            if (ballsInOver > 5) {
+                e.preventDefault();
+                return showError(
+                    `Invalid overs value "${overs}". The decimal part represents balls bowled in the current over and must be .0–.5 (e.g. 12.5 = 5 balls into over 13).`
+                );
+            }
+
+            // IPL RULE: innings needs at least 1 ball
+            const completedOvers = Math.floor(overs);
+            const ballsBowled    = completedOvers * 6 + ballsInOver;
+            if (ballsBowled <= 0) {
+                e.preventDefault();
+                return showError('At least one ball must have been bowled before predicting.');
+            }
+
+            // IPL RULE: T20 is 20 overs
+            if (ballsBowled >= 120) {
+                e.preventDefault();
+                return showError('The innings is already complete (20 overs bowled). No prediction needed.');
+            }
+
+            // IPL RULE: max 9 wickets fallen (10 = innings over)
+            if (wickets >= 10) {
+                e.preventDefault();
+                return showError('10 wickets ends the innings. Please enter wickets fallen (0–9).');
+            }
+
+            // Sanity: last-five runs ≤ current score
+            if (lastFive > score) {
+                e.preventDefault();
+                return showError('Runs in the last 5 overs cannot exceed the total current score.');
+            }
+        });
+    </script>
+
+</body>
+</html>
