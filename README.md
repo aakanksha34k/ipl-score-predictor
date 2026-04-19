@@ -5,7 +5,6 @@
 ![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.x-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-2.x-150458?style=for-the-badge&logo=pandas&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 > A machine learning web application that predicts the final score of an IPL T20 innings in real-time, using a trained **Random Forest Regressor** with IPL-specific feature engineering — achieving a **~95% R² score** on held-out test data.
 
@@ -13,13 +12,9 @@
 
 ## 📸 Screenshots
 
-> Add screenshots of your app to a `screenshots/` folder and they will render here.
-
 | Form Panel | Result Panel |
 |---|---|
 | ![Form](screenshots/form.png) | ![Result](screenshots/result.png) |
-
-> **Tip:** Run the app locally, take screenshots, and place them in `screenshots/form.png` and `screenshots/result.png`.
 
 ---
 
@@ -224,5 +219,5 @@ Predicted Final Score
 
 ## 🙏 Acknowledgements
 
-- Raw dataset sourced from the [Kaggle IPL Ball-by-Ball Dataset](https://www.kaggle.com/)
+- Raw dataset sourced from the [Kaggle IPL Ball-by-Ball Dataset]([https://www.kaggle.com/](https://www.kaggle.com/datasets/jamiewelsh2/ball-by-ball-ipl))
 - Inspired by the IPL's rich statistical history and the power of ensemble methods in sports analytics
